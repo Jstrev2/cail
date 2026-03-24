@@ -40,7 +40,7 @@ export default function MemberCard({ member, isCurrentUser, onClick, onTimerExpi
 
   return (
     <motion.div
-      layout
+      //layout
       onClick={isCurrentUser ? onClick : undefined}
       className={`relative rounded-2xl border backdrop-blur-md p-6 flex flex-col items-center gap-3 transition-colors duration-500 ${
         isCurrentUser ? "cursor-pointer hover:scale-[1.02]" : ""
