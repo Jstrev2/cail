@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 import { MemberStatus, SquadMember } from "@/lib/supabase";
+import { ROLES } from "@/lib/roles";
+import RoleIcon from "./RoleIcon";
 import CountdownTimer from "./CountdownTimer";
 
 const STATUS_CONFIG: Record<MemberStatus, { label: string; color: string; glow: string; bgAccent: string }> = {
@@ -34,6 +36,7 @@ interface MemberCardProps {
 
 export default function MemberCard({ member, isCurrentUser, onClick, onTimerExpire }: MemberCardProps) {
   const config = STATUS_CONFIG[member.status];
+  const role = ROLES[member.callsign];
 
   return (
     <motion.div
@@ -75,17 +78,17 @@ export default function MemberCard({ member, isCurrentUser, onClick, onTimerExpi
         />
       </div>
 
-      {/* Avatar circle */}
+      {/* Role icon circle */}
       <div
-        className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black border-2"
+        className="w-18 h-18 rounded-full flex items-center justify-center border-2"
         style={{
           borderColor: `${config.color}66`,
           background: `${config.bgAccent}`,
-          color: config.color,
-          fontFamily: "Orbitron, sans-serif",
+          width: "4.5rem",
+          height: "4.5rem",
         }}
       >
-        {member.callsign[0]}
+        <RoleIcon callsign={member.callsign} color={config.color} size={32} />
       </div>
 
       {/* Callsign */}
@@ -95,6 +98,13 @@ export default function MemberCard({ member, isCurrentUser, onClick, onTimerExpi
       >
         {member.callsign.toUpperCase()}
       </h2>
+
+      {/* Role title */}
+      {role && (
+        <span className="text-[10px] font-semibold tracking-[0.25em] text-zinc-500 -mt-2">
+          {role.title}
+        </span>
+      )}
 
       {/* Status label */}
       <motion.span
