@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase, SquadMember, MemberStatus } from "@/lib/supabase";
-import SchedulePanel from "@/components/SchedulePanel";
+import { supabase, SquadMember, MemberStatus, Schedule } from "@/lib/supabase";
 import MemberCard from "@/components/MemberCard";
 import StatusPicker from "@/components/StatusPicker";
 import UserSelect from "@/components/UserSelect";
@@ -15,6 +14,7 @@ export default function Home() {
   const [members, setMembers] = useState<SquadMember[]>([]);
   const [showPicker, setShowPicker] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
 
   const fetchMembers = useCallback(async () => {
     const { data } = await supabase
@@ -24,6 +24,16 @@ export default function Home() {
 
     if (data) setMembers(data);
     setLoading(false);
+  }, []);
+
+  const fetchSchedules = useCallback(async () => {
+    const today = new Date().toISOString().split("T")[0];
+    const { data } = await supabase
+      .from("schedules")
+      .select("*")
+      .gte("end_date", today)
+      .order("start_date");
+    if (data) setSchedules(data);
   }, []);
 
   useEffect(() => {
@@ -40,23 +50,19 @@ export default function Home() {
     if (!currentUser) return;
 
     fetchMembers();
+    fetchSchedules();
 
     // Subscribe to realtime changes
     const channel = supabase
       .channel("squad_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "squad_members" },
-        () => {
-          fetchMembers();
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "squad_members" }, () => fetchMembers())
+      .on("postgres_changes", { event: "*", schema: "public", table: "schedules" }, () => fetchSchedules())
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUser, fetchMembers]);
+  }, [currentUser, fetchMembers, fetchSchedules]);
 
   const handleUserSelect = (callsign: string) => {
     localStorage.setItem("cail_user", callsign);
@@ -136,6 +142,7 @@ export default function Home() {
               <MemberCard
                 member={member}
                 isCurrentUser={member.callsign === currentUser}
+                schedules={schedules}
                 onClick={() => setShowPicker(true)}
                 onTimerExpire={member.callsign === currentUser ? handleTimerExpire : undefined}
               />
@@ -143,11 +150,6 @@ export default function Home() {
           ))}
         </div>
       )}
-
-      {/* Schedule */}
-      <div className="w-full max-w-5xl">
-        <SchedulePanel currentUser={currentUser} />
-      </div>
 
       {/* Status Picker Modal */}
       {currentUser && (
