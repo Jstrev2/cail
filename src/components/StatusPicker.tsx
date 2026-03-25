@@ -9,27 +9,47 @@ const TIMER_OPTIONS = [5, 10, 15, 30];
 interface StatusPickerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (status: MemberStatus, timerMinutes?: number) => void;
+  onSelect: (status: MemberStatus, timerEnd?: Date) => void;
   currentStatus: MemberStatus;
 }
 
 export default function StatusPicker({ isOpen, onClose, onSelect, currentStatus }: StatusPickerProps) {
   const [showTimerPicker, setShowTimerPicker] = useState(false);
   const [customMinutes, setCustomMinutes] = useState("");
+  const [specificTime, setSpecificTime] = useState("");
+  const [timeMode, setTimeMode] = useState<"duration" | "specific">("duration");
 
   const handleAlmostReady = () => {
     setShowTimerPicker(true);
   };
 
   const handleTimerSelect = (minutes?: number) => {
-    onSelect("almost_ready", minutes);
+    const timerEnd = minutes ? new Date(Date.now() + minutes * 60 * 1000) : undefined;
+    onSelect("almost_ready", timerEnd);
     setShowTimerPicker(false);
+    setTimeMode("duration");
+    onClose();
+  };
+
+  const handleSpecificTime = () => {
+    if (!specificTime) return;
+    const [hours, mins] = specificTime.split(":").map(Number);
+    const target = new Date();
+    target.setHours(hours, mins, 0, 0);
+    // If the time is in the past, assume tomorrow
+    if (target <= new Date()) {
+      target.setDate(target.getDate() + 1);
+    }
+    onSelect("almost_ready", target);
+    setShowTimerPicker(false);
+    setTimeMode("duration");
+    setSpecificTime("");
     onClose();
   };
 
   const handleCustomTimer = () => {
     const mins = parseInt(customMinutes);
-    if (mins > 0 && mins <= 180) {
+    if (mins > 0 && mins <= 480) {
       handleTimerSelect(mins);
     }
   };
@@ -51,7 +71,7 @@ export default function StatusPicker({ isOpen, onClose, onSelect, currentStatus 
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => { onClose(); setShowTimerPicker(false); }}
+          onClick={() => { onClose(); setShowTimerPicker(false); setTimeMode("duration"); }}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -96,40 +116,85 @@ export default function StatusPicker({ isOpen, onClose, onSelect, currentStatus 
             ) : (
               <>
                 <h3 className="text-lg font-bold text-center mb-1 tracking-wide" style={{ fontFamily: "Orbitron, sans-serif" }}>
-                  SET TIMER
+                  WHEN READY?
                 </h3>
-                <p className="text-sm text-zinc-500 text-center mb-4">How long until you&apos;re ready?</p>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {TIMER_OPTIONS.map((mins) => (
-                    <button
-                      key={mins}
-                      onClick={() => handleTimerSelect(mins)}
-                      className="py-2.5 px-3 rounded-xl bg-white/5 border border-white/10 hover:bg-yellow-500/20 hover:border-yellow-500/50 font-semibold transition-all"
-                    >
-                      {mins} min
-                    </button>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    placeholder="Custom min"
-                    value={customMinutes}
-                    onChange={(e) => setCustomMinutes(e.target.value)}
-                    className="flex-1 py-2 px-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-500/50"
-                    min={1}
-                    max={180}
-                  />
+
+                {/* Mode toggle */}
+                <div className="flex gap-1 mb-4 bg-white/5 rounded-lg p-1">
                   <button
-                    onClick={handleCustomTimer}
-                    className="py-2 px-4 rounded-xl bg-yellow-500/20 border border-yellow-500/50 font-semibold hover:bg-yellow-500/30 transition-all"
+                    onClick={() => setTimeMode("duration")}
+                    className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                      timeMode === "duration" ? "bg-yellow-500/20 text-yellow-400" : "text-zinc-500"
+                    }`}
                   >
-                    Go
+                    ⏱️ In Minutes
+                  </button>
+                  <button
+                    onClick={() => setTimeMode("specific")}
+                    className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                      timeMode === "specific" ? "bg-yellow-500/20 text-yellow-400" : "text-zinc-500"
+                    }`}
+                  >
+                    🕐 At Time
                   </button>
                 </div>
+
+                {timeMode === "duration" ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      {TIMER_OPTIONS.map((mins) => (
+                        <button
+                          key={mins}
+                          onClick={() => handleTimerSelect(mins)}
+                          className="py-2.5 px-3 rounded-xl bg-white/5 border border-white/10 hover:bg-yellow-500/20 hover:border-yellow-500/50 font-semibold transition-all"
+                        >
+                          {mins} min
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="number"
+                        placeholder="Custom min"
+                        value={customMinutes}
+                        onChange={(e) => setCustomMinutes(e.target.value)}
+                        className="flex-1 py-2 px-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-500/50"
+                        min={1}
+                        max={480}
+                      />
+                      <button
+                        onClick={handleCustomTimer}
+                        className="py-2 px-4 rounded-xl bg-yellow-500/20 border border-yellow-500/50 font-semibold hover:bg-yellow-500/30 transition-all"
+                      >
+                        Go
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-zinc-500 text-center mb-3">Set exact time you&apos;ll be ready</p>
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="time"
+                        value={specificTime}
+                        onChange={(e) => setSpecificTime(e.target.value)}
+                        className="flex-1 py-3 px-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-yellow-500/50 text-center text-lg"
+                      />
+                      <button
+                        onClick={handleSpecificTime}
+                        disabled={!specificTime}
+                        className="py-3 px-5 rounded-xl bg-yellow-500/20 border border-yellow-500/50 font-bold hover:bg-yellow-500/30 transition-all disabled:opacity-30"
+                      >
+                        Set
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-zinc-600 text-center">If the time has passed today, it&apos;ll be set for tomorrow</p>
+                  </>
+                )}
+
                 <button
                   onClick={() => handleTimerSelect()}
-                  className="w-full mt-3 py-2 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+                  className="w-full mt-2 py-2 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
                 >
                   Skip timer
                 </button>

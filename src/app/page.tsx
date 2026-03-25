@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase, SquadMember, MemberStatus } from "@/lib/supabase";
+import SchedulePanel from "@/components/SchedulePanel";
 import MemberCard from "@/components/MemberCard";
 import StatusPicker from "@/components/StatusPicker";
 import UserSelect from "@/components/UserSelect";
@@ -62,18 +63,14 @@ export default function Home() {
     setCurrentUser(callsign);
   };
 
-  const handleStatusChange = async (status: MemberStatus, timerMinutes?: number) => {
+  const handleStatusChange = async (status: MemberStatus, timerEnd?: Date) => {
     if (!currentUser) return;
-
-    const timerEnd = timerMinutes
-      ? new Date(Date.now() + timerMinutes * 60 * 1000).toISOString()
-      : null;
 
     await supabase
       .from("squad_members")
       .update({
         status,
-        timer_end: timerEnd,
+        timer_end: timerEnd ? timerEnd.toISOString() : null,
         updated_at: new Date().toISOString(),
       })
       .eq("callsign", currentUser);
@@ -146,6 +143,11 @@ export default function Home() {
           ))}
         </div>
       )}
+
+      {/* Schedule */}
+      <div className="w-full max-w-5xl">
+        <SchedulePanel currentUser={currentUser} />
+      </div>
 
       {/* Status Picker Modal */}
       {currentUser && (

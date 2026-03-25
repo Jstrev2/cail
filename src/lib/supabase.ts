@@ -14,3 +14,12 @@ export interface SquadMember {
   timer_end: string | null;
   updated_at: string;
 }
+
+export interface Schedule {
+  id: string;
+  callsign: string;
+  title: string;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+}
