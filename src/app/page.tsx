@@ -155,6 +155,7 @@ export default function Home() {
           isOpen={showPicker}
           onClose={() => setShowPicker(false)}
           onSelect={handleStatusChange}
+          currentUser={currentUser}
           currentStatus={
             members.find((m) => m.callsign === currentUser)?.status || "not_ready"
           }
