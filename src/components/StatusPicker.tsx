@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { MemberStatus, supabase } from "@/lib/supabase";
+import { MemberStatus, supabase, TIMEZONES } from "@/lib/supabase";
 import { useState } from "react";
 
 const TIMER_OPTIONS = [5, 10, 15, 30];
@@ -19,11 +19,12 @@ interface StatusPickerProps {
   onSelect: (status: MemberStatus, timerEnd?: Date) => void;
   currentStatus: MemberStatus;
   currentUser: string;
+  currentTimezone: string;
 }
 
 type PickerView = "status" | "timer" | "schedule";
 
-export default function StatusPicker({ isOpen, onClose, onSelect, currentStatus, currentUser }: StatusPickerProps) {
+export default function StatusPicker({ isOpen, onClose, onSelect, currentStatus, currentUser, currentTimezone }: StatusPickerProps) {
   const [view, setView] = useState<PickerView>("status");
   const [timeMode, setTimeMode] = useState<"duration" | "specific">("duration");
   const [customMinutes, setCustomMinutes] = useState("");
@@ -142,7 +143,7 @@ export default function StatusPicker({ isOpen, onClose, onSelect, currentStatus,
                     Ready
                   </button>
 
-                  <div className="border-t border-white/10 pt-3">
+                  <div className="border-t border-white/10 pt-3 space-y-2">
                     <button
                       onClick={() => setView("schedule")}
                       className="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 flex items-center gap-3 bg-white/5 border border-white/10 hover:bg-purple-500/20 hover:border-purple-500/50"
@@ -150,6 +151,20 @@ export default function StatusPicker({ isOpen, onClose, onSelect, currentStatus,
                       <span className="text-lg">📅</span>
                       Set Schedule / Away
                     </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-zinc-500">🌐 Timezone:</span>
+                      <select
+                        value={currentTimezone}
+                        onChange={async (e) => {
+                          await supabase.from("squad_members").update({ timezone: e.target.value }).eq("callsign", currentUser);
+                        }}
+                        className="flex-1 py-1.5 px-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-cyan-500/50"
+                      >
+                        {TIMEZONES.map((tz) => (
+                          <option key={tz.value} value={tz.value}>{tz.label} ({tz.short})</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               </>

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { MemberStatus, SquadMember } from "@/lib/supabase";
+import { MemberStatus, SquadMember, TIMEZONES } from "@/lib/supabase";
 import { ROLES } from "@/lib/roles";
 import RoleIcon from "./RoleIcon";
 import CountdownTimer from "./CountdownTimer";
@@ -27,6 +27,24 @@ const STATUS_CONFIG: Record<MemberStatus, { label: string; color: string; glow: 
   },
 };
 
+function getLocalTime(timezone: string): string {
+  try {
+    return new Date().toLocaleTimeString("en-US", {
+      timeZone: timezone,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return "";
+  }
+}
+
+function getTimezoneShort(tz: string): string {
+  const found = TIMEZONES.find((t) => t.value === tz);
+  return found ? found.short : "CT";
+}
+
 interface MemberCardProps {
   member: SquadMember;
   isCurrentUser: boolean;
@@ -37,6 +55,8 @@ interface MemberCardProps {
 export default function MemberCard({ member, isCurrentUser, onClick, onTimerExpire }: MemberCardProps) {
   const config = STATUS_CONFIG[member.status];
   const role = ROLES[member.callsign];
+  const localTime = getLocalTime(member.timezone);
+  const tzShort = getTimezoneShort(member.timezone);
 
   return (
     <motion.div
@@ -67,8 +87,8 @@ export default function MemberCard({ member, isCurrentUser, onClick, onTimerExpi
           : { duration: 0.4 }
       }
     >
-      {/* Status dot */}
-      <div className="absolute top-4 right-4">
+      {/* Status dot + local time */}
+      <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
         <span
           className="block w-3 h-3 rounded-full"
           style={{
@@ -76,11 +96,14 @@ export default function MemberCard({ member, isCurrentUser, onClick, onTimerExpi
             boxShadow: `0 0 8px ${config.color}, 0 0 16px ${config.glow}`,
           }}
         />
+        <span className="text-[10px] text-zinc-500 font-mono">
+          {localTime} {tzShort}
+        </span>
       </div>
 
       {/* Role icon circle */}
       <div
-        className="w-18 h-18 rounded-full flex items-center justify-center border-2"
+        className="rounded-full flex items-center justify-center border-2"
         style={{
           borderColor: `${config.color}66`,
           background: `${config.bgAccent}`,

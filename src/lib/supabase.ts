@@ -12,6 +12,7 @@ export interface SquadMember {
   callsign: string;
   status: MemberStatus;
   timer_end: string | null;
+  timezone: string;
   updated_at: string;
 }
 
@@ -23,3 +24,10 @@ export interface Schedule {
   end_date: string;
   created_at: string;
 }
+
+export const TIMEZONES = [
+  { value: "America/New_York", label: "Eastern", short: "ET" },
+  { value: "America/Chicago", label: "Central", short: "CT" },
+  { value: "America/Denver", label: "Mountain", short: "MT" },
+  { value: "America/Los_Angeles", label: "Pacific", short: "PT" },
+];
